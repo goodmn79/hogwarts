@@ -40,7 +40,6 @@ public class FacultyController {
     @GetMapping("/{id}/students")
     public Collection<StudentDTO> getStudentsOfFaculty(@PathVariable long id) {
         return service.getStudentsOfFaculty(id);
-
     }
 
     @PutMapping

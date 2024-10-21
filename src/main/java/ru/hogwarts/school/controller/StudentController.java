@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
-import ru.hogwarts.school.service.AvatarService;
-import ru.hogwarts.school.service.StudentServiceImpl;
+import ru.hogwarts.school.service.StudentService;
 
 import java.util.Collection;
 
@@ -13,8 +12,7 @@ import java.util.Collection;
 @RequestMapping("/students")
 @RequiredArgsConstructor
 public class StudentController {
-    private final StudentServiceImpl studentService;
-    private final AvatarService avatarService;
+    private final StudentService studentService;
 
     @PostMapping
     public StudentDTO addStudent(@RequestBody StudentDTO studentDTO) {
