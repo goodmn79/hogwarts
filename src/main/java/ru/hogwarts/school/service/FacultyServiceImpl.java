@@ -19,6 +19,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
+import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
+
 @Service
 @RequiredArgsConstructor
 public class FacultyServiceImpl implements FacultyService {
@@ -34,7 +37,7 @@ public class FacultyServiceImpl implements FacultyService {
                         filteredByColorFaculty.stream())
                 .collect(Collectors.toSet());
         if (filteredFaculty.isEmpty()) throw new FacultyNotFoundException();
-        return FacultyMapper.mapToDTO(filteredFaculty);
+        return mapToDTO(filteredFaculty);
     }
 
     @Override
@@ -55,7 +58,7 @@ public class FacultyServiceImpl implements FacultyService {
     public Collection<FacultyDTO> getAll() {
         Collection<Faculty> faculties = facultyRepository.findAll();
         if (faculties.isEmpty()) throw new FacultyNotFoundException();
-        return FacultyMapper.mapToDTO(faculties);
+        return mapToDTO(faculties);
     }
 
     @Override
