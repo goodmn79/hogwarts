@@ -3,16 +3,12 @@ package ru.hogwarts.school.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.dto.FacultyDTO;
-import ru.hogwarts.school.dto.StudentDTO;
 import ru.hogwarts.school.exception.FacultyAlreadyAddedException;
 import ru.hogwarts.school.exception.FacultyHasStudentException;
 import ru.hogwarts.school.exception.FacultyNotFoundException;
 import ru.hogwarts.school.mapper.FacultyMapper;
-import ru.hogwarts.school.mapper.StudentMapper;
 import ru.hogwarts.school.model.Faculty;
-import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
-import ru.hogwarts.school.repository.StudentRepository;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -26,7 +22,6 @@ import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 @RequiredArgsConstructor
 public class FacultyServiceImpl implements FacultyService {
     private final FacultyRepository facultyRepository;
-    private final StudentRepository studentRepository;
 
     @Override
     public Collection<FacultyDTO> getAllFacultiesByNameOrColor(String searchTerm) {
@@ -38,12 +33,6 @@ public class FacultyServiceImpl implements FacultyService {
                 .collect(Collectors.toSet());
         if (filteredFaculty.isEmpty()) throw new FacultyNotFoundException();
         return mapToDTO(filteredFaculty);
-    }
-
-    @Override
-    public Collection<StudentDTO> getStudentsOfFaculty(long id) {
-        Collection<Student> facultyStudents = studentRepository.findAllByFacultyId(id);
-        return StudentMapper.mapToDTO(facultyStudents);
     }
 
     @Override
@@ -82,7 +71,6 @@ public class FacultyServiceImpl implements FacultyService {
 
     @Override
     public FacultyDTO deleteById(long id) {
-        if (!getStudentsOfFaculty(id).isEmpty()) throw new FacultyHasStudentException();
         Optional<Faculty> deletedFaculty = facultyRepository.findById(id);
         if (deletedFaculty.isEmpty()) throw new FacultyNotFoundException();
         facultyRepository.delete(deletedFaculty.get());

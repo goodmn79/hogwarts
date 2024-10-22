@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
 import ru.hogwarts.school.service.FacultyService;
+import ru.hogwarts.school.service.StudentService;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +35,9 @@ class FacultyControllerTest {
 
     @MockBean
     private FacultyService facultyService;
+
+    @MockBean
+    private StudentService studentService;
 
     private long facultyId;
 
@@ -119,7 +123,7 @@ class FacultyControllerTest {
                         .setName("student two")
                         .setAge(15)
         );
-        when(facultyService.getStudentsOfFaculty(facultyId)).thenReturn(mockStudents);
+        when(studentService.findByFacultyId(facultyId)).thenReturn(mockStudents);
 
         ResultActions perform = mockMvc.perform(get(URL + "/{id}/students", facultyId)
                 .accept(MediaType.APPLICATION_JSON));
