@@ -1,176 +1,149 @@
 package ru.hogwarts.school.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
-import ru.hogwarts.school.service.FacultyService;
-import ru.hogwarts.school.service.StudentService;
+import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.repository.FacultyRepository;
+import ru.hogwarts.school.repository.StudentRepository;
 
-import java.util.Arrays;
 import java.util.Collection;
 
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
+import static ru.hogwarts.school.mapper.StudentMapper.mapFromDTO;
 
-@WebMvcTest(FacultyController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class FacultyControllerTest {
-    private static final String URL = "/faculties";
+    @LocalServerPort
+    private int port;
 
     @Autowired
-    private MockMvc mockMvc;
+    private FacultyRepository facultyRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private StudentRepository studentRepository;
 
-    @MockBean
-    private FacultyService facultyService;
-
-    @MockBean
-    private StudentService studentService;
-
-    private long facultyId;
+    @Autowired
+    private TestRestTemplate restTemplate;
 
     private FacultyDTO testFacultyDTO;
 
     @BeforeEach
     void init() {
-        facultyId = 1L;
-        testFacultyDTO = new FacultyDTO()
-                .setId(facultyId)
+        studentRepository.deleteAll();
+        facultyRepository.deleteAll();
+
+        Faculty faculty = new Faculty()
                 .setName("test faculty")
                 .setColor("test color");
+        testFacultyDTO = mapToDTO(facultyRepository.save(faculty));
     }
 
     @Test
-    void testCreateFaculty() throws Exception {
-        FacultyDTO expectedFacultyDTO = testFacultyDTO;
-        when(facultyService.add(expectedFacultyDTO)).thenReturn(expectedFacultyDTO);
+    void testCreateFaculty() {
+        String name = "actual name";
+        String color = "actual color";
+        ResponseEntity<FacultyDTO> response =
+                restTemplate.postForEntity(
+                        url(port),
+                        new FacultyDTO()
+                                .setName(name)
+                                .setColor(color),
+                        FacultyDTO.class);
+        FacultyDTO actualFacultyDTO = response.getBody();
 
-        ResultActions perform = mockMvc.perform(post(URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(expectedFacultyDTO)));
-
-        perform
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(facultyId))
-                .andExpect(jsonPath("$.name").value(expectedFacultyDTO.getName()))
-                .andExpect(jsonPath("$.color").value(expectedFacultyDTO.getColor()))
-                .andDo(print());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(actualFacultyDTO).isNotNull();
+        assertThat(actualFacultyDTO.getName()).isEqualTo(name);
+        assertThat(actualFacultyDTO.getColor()).isEqualTo(color);
     }
 
     @Test
-    void testGetAllFaculties() throws Exception {
-        Collection<FacultyDTO> mockFaculties = Arrays.asList(
-                testFacultyDTO,
+    void testGetAllFaculties() {
+        ResponseEntity<Collection> response =
+                restTemplate.getForEntity(url(port), Collection.class);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().size()).isEqualTo(1);
+    }
+
+    @Test
+    void testGetFacultyById() {
+        long facultyId = testFacultyDTO.getId();
+
+        ResponseEntity<FacultyDTO> response = restTemplate.getForEntity(url(port, facultyId), FacultyDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        FacultyDTO actualFacultyDTO = response.getBody();
+        assertThat(actualFacultyDTO.getId()).isEqualTo(facultyId);
+        assertThat(actualFacultyDTO.getName()).isEqualTo(testFacultyDTO.getName());
+        assertThat(actualFacultyDTO.getColor()).isEqualTo(testFacultyDTO.getColor());
+    }
+
+    @Test
+    void testGetStudentsOfFaculty() {
+        long facultyId = testFacultyDTO.getId();
+        StudentDTO expectedStudentDTO =
+                new StudentDTO()
+                        .setName("any name")
+                        .setAge(12)
+                        .setFacultyId(facultyId);
+        studentRepository.save(mapFromDTO(expectedStudentDTO));
+
+        ResponseEntity<Collection> response = restTemplate.getForEntity(url(port, facultyId) + "/students", Collection.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().size()).isEqualTo(1);
+    }
+
+    @Test
+    void testChangeFaculty() {
+        long facultyId = testFacultyDTO.getId();
+        FacultyDTO expectedFacultyDTO =
                 new FacultyDTO()
-                        .setId(2L)
-                        .setName("second faculty")
-                        .setColor("second color")
-        );
-        when(facultyService.getAll()).thenReturn(mockFaculties);
+                        .setId(facultyId)
+                        .setName("new name")
+                        .setColor("another color");
 
-        ResultActions perform = mockMvc.perform(get(URL)
-                .accept(MediaType.APPLICATION_JSON));
-        perform
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id").value(testFacultyDTO.getId()))
-                .andExpect(jsonPath("$[0].name").value(testFacultyDTO.getName()))
-                .andExpect(jsonPath("$[0].color").value(testFacultyDTO.getColor()))
-                .andExpect(jsonPath("$[1].id").value(2L))
-                .andExpect(jsonPath("$[1].name").value("second faculty"))
-                .andExpect(jsonPath("$[1].color").value("second color"))
-                .andDo(print());
+        restTemplate.put(url(port), expectedFacultyDTO);
+
+        ResponseEntity<FacultyDTO> response = restTemplate.getForEntity(url(port, facultyId), FacultyDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        FacultyDTO actualFacultyDTO = response.getBody();
+        assertThat(actualFacultyDTO).isNotNull()
+                .isEqualTo(expectedFacultyDTO);
     }
 
     @Test
-    void testGetFacultyById() throws Exception {
-        FacultyDTO expectedFacultyDTO = testFacultyDTO;
-        when(facultyService.getById(anyLong())).thenReturn(expectedFacultyDTO);
+    void testDeleteFaculty() {
+        long facultyId = testFacultyDTO.getId();
 
-        ResultActions perform = mockMvc.perform(get(URL + "/{id}", facultyId));
+        restTemplate.delete(url(port, facultyId));
 
-        perform
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(expectedFacultyDTO.getId()))
-                .andExpect(jsonPath("$.name").value(expectedFacultyDTO.getName()))
-                .andExpect(jsonPath("$.color").value(expectedFacultyDTO.getColor()))
-                .andDo(print());
+        ResponseEntity<FacultyDTO> response = restTemplate.getForEntity(url(port, facultyId), FacultyDTO.class);
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    @Test
-    void testGetStudentsOfFaculty() throws Exception {
-        Collection<StudentDTO> mockStudents = Arrays.asList(
-                new StudentDTO()
-                        .setId(1L)
-                        .setName("student one")
-                        .setAge(12),
-                new StudentDTO()
-                        .setId(2L)
-                        .setName("student two")
-                        .setAge(15)
-        );
-        when(studentService.findByFacultyId(facultyId)).thenReturn(mockStudents);
-
-        ResultActions perform = mockMvc.perform(get(URL + "/{id}/students", facultyId)
-                .accept(MediaType.APPLICATION_JSON));
-
-        perform
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].name").value("student one"))
-                .andExpect(jsonPath("$[0].age").value(12))
-                .andExpect(jsonPath("$[1].id").value(2L))
-                .andExpect(jsonPath("$[1].name").value("student two"))
-                .andExpect(jsonPath("$[1].age").value(15))
-                .andDo(print());
+    private String url(int port) {
+        return "http://localhost:" + port + "/faculties";
     }
 
-    @Test
-    void testChangeFaculty() throws Exception {
-        FacultyDTO expectedFacultyDTO = testFacultyDTO;
-        when(facultyService.change(expectedFacultyDTO)).thenReturn(expectedFacultyDTO);
-
-        ResultActions perform = mockMvc.perform(put(URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(expectedFacultyDTO)));
-
-        perform
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(expectedFacultyDTO.getId()))
-                .andExpect(jsonPath("$.name").value(expectedFacultyDTO.getName()))
-                .andExpect(jsonPath("$.color").value(expectedFacultyDTO.getColor()))
-                .andDo(print());
-    }
-
-    @Test
-    void testDeleteFaculty() throws Exception {
-        FacultyDTO expectedFacultyDTO = testFacultyDTO;
-        when(facultyService.deleteById(anyLong())).thenReturn(expectedFacultyDTO);
-
-        ResultActions perform = mockMvc.perform(delete(URL + "/{id}", facultyId));
-
-        perform
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(expectedFacultyDTO.getId()))
-                .andExpect(jsonPath("$.name").value(expectedFacultyDTO.getName()))
-                .andExpect(jsonPath("$.color").value(expectedFacultyDTO.getColor()))
-                .andDo(print());
+    private String url(int port, long id) {
+        return url(port) + "/" + id;
     }
 }
