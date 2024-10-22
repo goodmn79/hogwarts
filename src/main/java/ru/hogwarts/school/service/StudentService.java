@@ -6,6 +6,8 @@ import ru.hogwarts.school.dto.StudentDTO;
 import java.util.Collection;
 
 public interface StudentService extends SchoolService<StudentDTO> {
+    Collection<StudentDTO> findByFacultyId(long facultyId);
+
     Collection<StudentDTO> findByAgeBetween(int from, int to);
 
     Collection<StudentDTO> findByAge(int age);

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
-import ru.hogwarts.school.exception.StudentAlreadyAddedException;
 import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.mapper.StudentMapper;
 import ru.hogwarts.school.model.Faculty;
@@ -16,6 +15,7 @@ import java.util.Optional;
 
 import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
+import static ru.hogwarts.school.mapper.StudentMapper.mapToDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -24,10 +24,16 @@ public class StudentServiceImpl implements StudentService {
     private final FacultyService facultyService;
 
     @Override
+    public Collection<StudentDTO> findByFacultyId(long facultyId) {
+        Collection<Student> students = repository.findAllByFacultyId(facultyId);
+        return mapToDTO(students);
+    }
+
+    @Override
     public Collection<StudentDTO> findByAgeBetween(int from, int to) {
         Collection<Student> students = repository.findByAgeBetween(from, to);
         if (students.isEmpty()) throw new StudentNotFoundException();
-        return StudentMapper.mapToDTO(students);
+        return mapToDTO(students);
     }
 
     @Override
@@ -84,10 +90,5 @@ public class StudentServiceImpl implements StudentService {
         Optional<Student> foundStudent = repository.findById(id);
         foundStudent.ifPresent(repository::delete);
         return StudentMapper.mapToDTO(foundStudent.orElseThrow(StudentNotFoundException::new));
-    }
-
-    private void checkContains(StudentDTO studentDTO) {
-        Optional<Student> student = repository.findByNameIgnoreCase(studentDTO.getName());
-        if (student.isPresent()) throw new StudentAlreadyAddedException();
     }
 }

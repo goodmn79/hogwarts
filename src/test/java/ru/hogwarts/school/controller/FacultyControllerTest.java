@@ -10,12 +10,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
+import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
 import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 import static ru.hogwarts.school.mapper.StudentMapper.mapFromDTO;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -39,12 +41,10 @@ class FacultyControllerTest {
         studentRepository.deleteAll();
         facultyRepository.deleteAll();
 
-        testFacultyDTO = restTemplate.postForObject(
-                url(port),
-                new FacultyDTO()
-                        .setName("test faculty")
-                        .setColor("test color"),
-                FacultyDTO.class);
+        Faculty faculty = new Faculty()
+                .setName("test faculty")
+                .setColor("test color");
+        testFacultyDTO = mapToDTO(facultyRepository.save(faculty));
     }
 
     @Test

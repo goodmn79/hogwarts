@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
+import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
@@ -19,6 +20,9 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
+import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
+import static ru.hogwarts.school.mapper.StudentMapper.mapFromDTO;
+import static ru.hogwarts.school.mapper.StudentMapper.mapToDTO;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class StudentControllerTest {
@@ -47,19 +51,17 @@ class StudentControllerTest {
         studentRepository.deleteAll();
         facultyRepository.deleteAll();
 
-
-        testFacultyDTO = restTemplate.postForObject(
-                urlForFaculties(port),
-                new FacultyDTO()
-                        .setName("test faculty")
-                        .setColor("test color"),
-                FacultyDTO.class);
+        Faculty faculty = new Faculty()
+                .setName("test faculty")
+                .setColor("test color");
+        testFacultyDTO = mapToDTO(facultyRepository.save(faculty));
 
         StudentDTO studentDTO = new StudentDTO()
                 .setName("test name")
                 .setAge(random.nextInt(12, 14))
                 .setFacultyId(testFacultyDTO.getId());
-        testStudentDTO = restTemplate.postForObject(url(port), studentDTO, StudentDTO.class);
+        Student student = studentRepository.save(mapFromDTO(studentDTO));
+        testStudentDTO = mapToDTO(student);
     }
 
     @Test
