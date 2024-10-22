@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
-import ru.hogwarts.school.service.FacultyService;
 
 import java.util.Arrays;
 import java.util.Collection;

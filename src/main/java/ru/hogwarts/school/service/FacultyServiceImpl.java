@@ -19,9 +19,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
-import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
-
 @Service
 @RequiredArgsConstructor
 public class FacultyServiceImpl implements FacultyService {

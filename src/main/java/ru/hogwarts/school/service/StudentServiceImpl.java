@@ -14,9 +14,6 @@ import ru.hogwarts.school.repository.StudentRepository;
 import java.util.Collection;
 import java.util.Optional;
 
-import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
-import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
-
 @Service
 @RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
