@@ -26,26 +26,26 @@ public class AvatarController {
     public ResponseEntity<String> uploadAvatar(@PathVariable long studentId, @RequestParam MultipartFile avatar) throws IOException {
         if (avatar.isEmpty()) return ResponseEntity.badRequest().body("file is empty");
         if (avatar.getSize() > 1024 * 300) return ResponseEntity.badRequest().body("file size is too large");
-        service.upload(studentId, avatar);
+        service.addAvatar(studentId, avatar);
         return ResponseEntity.ok().body("avatar successfully added");
     }
 
     @GetMapping
     public void getAvatarByStudentId(@PathVariable long studentId, HttpServletResponse response) throws IOException {
-        AvatarDTO avatarDTO = service.getFromDB(studentId);
+        AvatarDTO avatarDTO = service.getAvatar(studentId);
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(avatarDTO.getMediaType());
-        response.setContentLength(avatarDTO.getFileSize());
+        response.setContentLength(avatarDTO.getSize());
         try (OutputStream os = response.getOutputStream()) {
-            Files.copy(Path.of(avatarDTO.getFilePath()), os);
+            Files.copy(Path.of(avatarDTO.getPath()), os);
         }
     }
 
     @GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> downloadAvatar(@PathVariable long studentId) {
-        AvatarDTO avatarDTO = service.getFromDB(studentId);
+    public ResponseEntity<byte[]> downloadAvatar(@PathVariable long studentId) throws IOException {
+        AvatarDTO avatarDTO = service.getAvatar(studentId);
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentDispositionFormData("attachment", avatarDTO.getName(avatarDTO.getFilePath()));
+        headers.setContentDispositionFormData("attachment", avatarDTO.getName());
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(avatarDTO.getData());
     }
 }

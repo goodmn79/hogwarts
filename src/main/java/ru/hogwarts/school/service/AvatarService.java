@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.hogwarts.school.dto.AvatarDTO;
 import ru.hogwarts.school.exception.AvatarNotFoundException;
-import ru.hogwarts.school.exception.FileNotExistException;
 import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.model.Avatar;
 import ru.hogwarts.school.model.Student;
@@ -19,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.write;
 import static ru.hogwarts.school.mapper.AvatarMapper.mapToDTO;
 
@@ -33,15 +33,15 @@ public class AvatarService {
     private final StudentService studentService;
     private final EntityManager entityManager;
 
-    public void upload(long studentId, MultipartFile multipartFile) throws IOException {
+    public void addAvatar(long studentId, MultipartFile multipartFile) throws IOException {
         if (studentService.getById(studentId) == null) throw new StudentNotFoundException();
         Student student = entityManager.getReference(Student.class, studentId);
         String file = avatarDir + getFileName(studentId, Objects.requireNonNull(multipartFile.getOriginalFilename()));
         Path path = Path.of(file);
         Avatar avatar = avatarRepository.findByStudentId(studentId)
                 .orElse(new Avatar())
-                .setFilePath(file)
-                .setFileSize((int) multipartFile.getSize())
+                .setPath(file)
+                .setSize((int) multipartFile.getSize())
                 .setMediaType(multipartFile.getContentType())
                 .setData(multipartFile.getBytes())
                 .setStudent(student);
@@ -50,10 +50,10 @@ public class AvatarService {
         write(path, multipartFile.getBytes());
     }
 
-    public AvatarDTO getFromDB(long studentId) {
+    public AvatarDTO getAvatar(long studentId) throws IOException {
         Avatar avatar = avatarRepository.findByStudentId(studentId).orElseThrow(AvatarNotFoundException::new);
-        Path avatarPath = Path.of(avatar.getFilePath());
-        if (Files.notExists(avatarPath)) throw new FileNotExistException();
+        Path avatarPath = Path.of(avatar.getPath());
+        avatar.setData(readAllBytes(avatarPath));
         return mapToDTO(avatar);
     }
 

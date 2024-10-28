@@ -59,12 +59,12 @@ class AvatarControllerTest {
         byte[] data = Files.readAllBytes(Path.of(filePath));
         testAvatarDTO = new AvatarDTO()
                 .setId(ID)
-                .setFileName("test_avatar.png")
-                .setFilePath(filePath)
-                .setFileSize(data.length)
+                .setName("test_avatar.png")
+                .setPath(filePath)
+                .setSize(data.length)
                 .setMediaType(MediaType.IMAGE_PNG_VALUE)
                 .setData(data);
-        when(avatarService.getFromDB(ID)).thenReturn(testAvatarDTO);
+        when(avatarService.getAvatar(ID)).thenReturn(testAvatarDTO);
 
         ResultActions perform = mockMvc.perform(get(URL, ID));
 
@@ -76,7 +76,7 @@ class AvatarControllerTest {
                     assert response.getContentLength() == testAvatarDTO.getData().length;
                 })
                 .andExpect(content().bytes(testAvatarDTO.getData()))
-                .andExpect(header().string("Content-Length", String.valueOf(testAvatarDTO.getFileSize())));
+                .andExpect(header().string("Content-Length", String.valueOf(testAvatarDTO.getSize())));
 
     }
 
@@ -84,12 +84,12 @@ class AvatarControllerTest {
     void testDownloadAvatar() throws Exception {
         testAvatarDTO = new AvatarDTO()
                 .setId(ID)
-                .setFileName("test_avatar.png")
-                .setFilePath("/avatars/test_avatar.png")
-                .setFileSize("test image content".getBytes().length)
+                .setName("test_avatar.png")
+                .setPath("/avatars/test_avatar.png")
+                .setSize("test image content".getBytes().length)
                 .setMediaType(MediaType.IMAGE_PNG_VALUE)
                 .setData("test image content".getBytes());
-        when(avatarService.getFromDB(ID)).thenReturn(testAvatarDTO);
+        when(avatarService.getAvatar(ID)).thenReturn(testAvatarDTO);
 
         ResultActions perform = mockMvc.perform(get(URL + "/download", ID)
                 .content(testAvatarDTO.getData())

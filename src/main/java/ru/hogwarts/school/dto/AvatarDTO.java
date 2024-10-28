@@ -7,9 +7,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class AvatarDTO {
     private long id;
-    private String fileName;
-    private String filePath;
-    private int fileSize;
+    private String name;
+    private String path;
+    private int size;
     private String mediaType;
     private byte[] data;
 
