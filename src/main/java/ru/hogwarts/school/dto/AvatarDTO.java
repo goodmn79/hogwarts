@@ -1,5 +1,6 @@
 package ru.hogwarts.school.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -11,9 +12,6 @@ public class AvatarDTO {
     private String path;
     private int size;
     private String mediaType;
+    @JsonIgnore
     private byte[] data;
-
-    public String getName(String filePath) {
-        return filePath.substring(filePath.lastIndexOf("/") + 1);
-    }
 }

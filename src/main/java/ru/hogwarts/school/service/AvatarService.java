@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.hogwarts.school.dto.AvatarDTO;
@@ -16,9 +17,9 @@ import ru.hogwarts.school.repository.AvatarRepository;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Objects;
 
-import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.write;
 import static ru.hogwarts.school.mapper.AvatarMapper.mapToDTO;
 
@@ -50,10 +51,15 @@ public class AvatarService {
         write(path, multipartFile.getBytes());
     }
 
+    public Collection<AvatarDTO> getAvatars(int numOfPage, int size) {
+        PageRequest page = PageRequest.of((numOfPage - 1), size);
+        Collection<Avatar> avatars = avatarRepository.findAll(page).getContent();
+        if (avatars.isEmpty()) throw new AvatarNotFoundException();
+        return mapToDTO(avatars);
+    }
+
     public AvatarDTO getAvatar(long studentId) throws IOException {
         Avatar avatar = avatarRepository.findByStudentId(studentId).orElseThrow(AvatarNotFoundException::new);
-        Path avatarPath = Path.of(avatar.getPath());
-        avatar.setData(readAllBytes(avatarPath));
         return mapToDTO(avatar);
     }
 
