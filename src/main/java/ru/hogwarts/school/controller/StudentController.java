@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.hogwarts.school.dto.AvatarDTO;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
+import ru.hogwarts.school.service.AvatarService;
 import ru.hogwarts.school.service.StudentService;
 
+import java.io.IOException;
 import java.util.Collection;
 
 @RestController
@@ -15,6 +18,7 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class StudentController {
     private final StudentService studentService;
+    private final AvatarService avatarService;
 
     @PostMapping
     public StudentDTO addStudent(@RequestBody StudentDTO studentDTO) {
@@ -70,7 +74,13 @@ public class StudentController {
 
     @DeleteMapping("/{id}")
     public StudentDTO deleteStudent(@PathVariable long id) {
-        return studentService.deleteById(id);
+        try {
+            AvatarDTO avatarDTO = avatarService.getAvatar(id);
+            avatarService.deleteAvatar(avatarDTO.getId());
+            return studentService.deleteById(id);
+        } catch (Exception e) {
+            return studentService.deleteById(id);
+        }
     }
 
     private boolean nullable(Integer... any) {

@@ -14,4 +14,5 @@ public class AvatarDTO {
     private String mediaType;
     @JsonIgnore
     private byte[] data;
+    private long studentId;
 }

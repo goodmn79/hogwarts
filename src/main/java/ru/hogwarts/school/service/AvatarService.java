@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
 
+import static java.nio.file.Files.notExists;
 import static java.nio.file.Files.write;
 import static ru.hogwarts.school.mapper.AvatarMapper.mapToDTO;
 
@@ -61,6 +62,13 @@ public class AvatarService {
     public AvatarDTO getAvatar(long studentId) throws IOException {
         Avatar avatar = avatarRepository.findByStudentId(studentId).orElseThrow(AvatarNotFoundException::new);
         return mapToDTO(avatar);
+    }
+
+    public void deleteAvatar(long id) throws IOException {
+        Avatar avatar = avatarRepository.findById(id).orElseThrow(AvatarNotFoundException::new);
+        Path avatarPath = Path.of(avatar.getPath());
+        Files.deleteIfExists(avatarPath);
+        if (notExists(avatarPath)) avatarRepository.delete(avatar);
     }
 
     private String getFileName(long studentId, String fileName) {

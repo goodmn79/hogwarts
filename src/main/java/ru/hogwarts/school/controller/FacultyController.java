@@ -1,6 +1,7 @@
 package ru.hogwarts.school.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
@@ -48,7 +49,13 @@ public class FacultyController {
     }
 
     @DeleteMapping("/{id}")
-    public FacultyDTO deleteFaculty(@PathVariable long id) {
-        return facultyService.deleteById(id);
+    public ResponseEntity<FacultyDTO> deleteFaculty(@PathVariable long id) {
+        try {
+            facultyService.deleteById(id);
+            return ResponseEntity.ok(facultyService.deleteById(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
     }
 }

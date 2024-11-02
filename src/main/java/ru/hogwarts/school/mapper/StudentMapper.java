@@ -32,7 +32,6 @@ public class StudentMapper {
     public static Collection<StudentDTO> mapToDTO(Collection<Student> students) {
         Type collectionType = new TypeToken<Collection<StudentDTO>>() {
         }.getType();
-
         return mapper.map(students, collectionType);
     }
 

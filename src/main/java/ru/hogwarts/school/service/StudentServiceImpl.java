@@ -1,6 +1,7 @@
 package ru.hogwarts.school.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
@@ -109,6 +110,7 @@ public class StudentServiceImpl implements StudentService {
         return mapToDTO(foundStudent.orElseThrow(StudentNotFoundException::new));
     }
 
+    @SneakyThrows
     @Override
     public StudentDTO deleteById(long id) {
         Optional<Student> foundStudent = repository.findById(id);

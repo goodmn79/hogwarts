@@ -17,6 +17,7 @@ public class Avatar {
     @Transient
     private byte[] data;
     @OneToOne
+    @JoinColumn(name = "student_id")
     private Student student;
 
 }
