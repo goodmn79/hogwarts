@@ -1,9 +1,11 @@
 package ru.hogwarts.school.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
+import ru.hogwarts.school.exception.AvatarNotFoundException;
 import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.mapper.StudentMapper;
 import ru.hogwarts.school.model.Faculty;
@@ -34,14 +36,20 @@ public class StudentServiceImpl implements StudentService {
     public Collection<StudentDTO> findByAgeBetween(int from, int to) {
         Collection<Student> students = repository.findByAgeBetween(from, to);
         if (students.isEmpty()) throw new StudentNotFoundException();
-        return StudentMapper.mapToDTO(students);
+        return mapToDTO(students);
     }
 
     @Override
     public Collection<StudentDTO> findByAge(int age) {
         Collection<Student> students = repository.findByAge(age);
         if (students.isEmpty()) throw new StudentNotFoundException();
-        return StudentMapper.mapToDTO(students);
+        return mapToDTO(students);
+    }
+
+    public Collection<StudentDTO> getLastStudents(int count) {
+        Collection<Student> students = repository.findLastByIdDesc(count);
+        if (students.isEmpty()) throw new AvatarNotFoundException();
+        return mapToDTO(students);
     }
 
     @Override
@@ -52,20 +60,36 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public int getCountOfStudents() {
+        return repository.getCountOfStudents();
+    }
+
+    @Override
+    public float getAverageAgeOfStudents() {
+        return repository.getAverageAgeOfStudents();
+    }
+
+    @Override
+    public Collection<StudentDTO> findLastStudents(int count) {
+        Collection<Student> lastStudents = repository.findLastByIdDesc(count);
+        return mapToDTO(lastStudents);
+    }
+
+    @Override
     public StudentDTO add(StudentDTO studentDTO) {
         Faculty faculty = mapFromDTO(facultyService.getById(studentDTO.getFacultyId()));
         Student addedStudent = new Student()
                 .setName(studentDTO.getName())
                 .setAge(studentDTO.getAge())
                 .setFaculty(faculty);
-        return StudentMapper.mapToDTO(repository.save(addedStudent));
+        return mapToDTO(repository.save(addedStudent));
     }
 
     @Override
     public Collection<StudentDTO> getAll() {
         Collection<Student> students = repository.findAll();
         if (students.isEmpty()) throw new StudentNotFoundException();
-        return StudentMapper.mapToDTO(students);
+        return mapToDTO(students);
     }
 
     @Override
@@ -83,13 +107,14 @@ public class StudentServiceImpl implements StudentService {
             repository.save(s);
             return s;
         });
-        return StudentMapper.mapToDTO(foundStudent.orElseThrow(StudentNotFoundException::new));
+        return mapToDTO(foundStudent.orElseThrow(StudentNotFoundException::new));
     }
 
+    @SneakyThrows
     @Override
     public StudentDTO deleteById(long id) {
         Optional<Student> foundStudent = repository.findById(id);
         foundStudent.ifPresent(repository::delete);
-        return StudentMapper.mapToDTO(foundStudent.orElseThrow(StudentNotFoundException::new));
+        return mapToDTO(foundStudent.orElseThrow(StudentNotFoundException::new));
     }
 }

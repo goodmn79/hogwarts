@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.repository.AvatarRepository;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
@@ -32,12 +33,16 @@ class FacultyControllerTest {
     private StudentRepository studentRepository;
 
     @Autowired
+    private AvatarRepository avatarRepository;
+
+    @Autowired
     private TestRestTemplate restTemplate;
 
     private FacultyDTO testFacultyDTO;
 
     @BeforeEach
     void init() {
+        avatarRepository.deleteAll();
         studentRepository.deleteAll();
         facultyRepository.deleteAll();
 

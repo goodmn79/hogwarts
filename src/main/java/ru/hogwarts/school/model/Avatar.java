@@ -11,12 +11,13 @@ public class Avatar {
     @Id
     @GeneratedValue
     private long id;
-    private String filePath;
-    private int fileSize;
+    private String path;
+    private int size;
     private String mediaType;
-    @Lob
+    @Transient
     private byte[] data;
     @OneToOne
+    @JoinColumn(name = "student_id")
     private Student student;
 
 }

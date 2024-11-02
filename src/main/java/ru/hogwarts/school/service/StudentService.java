@@ -13,4 +13,10 @@ public interface StudentService extends SchoolService<StudentDTO> {
     Collection<StudentDTO> findByAge(int age);
 
     FacultyDTO getFacultyOfStudent(long id);
+
+    int getCountOfStudents();
+
+    float getAverageAgeOfStudents();
+
+    Collection<StudentDTO> findLastStudents(int count);
 }

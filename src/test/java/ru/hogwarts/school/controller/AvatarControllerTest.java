@@ -4,7 +4,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
@@ -24,8 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AvatarController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AvatarControllerTest {
-    private static final String URL = "/avatars/{studentId}";
+    @LocalServerPort
+    private static int port;
+    private static final String URL = "http://localhost:" + port + "/avatars/{studentId}";
     private static final long ID = 1L;
 
     @Autowired
@@ -59,12 +64,12 @@ class AvatarControllerTest {
         byte[] data = Files.readAllBytes(Path.of(filePath));
         testAvatarDTO = new AvatarDTO()
                 .setId(ID)
-                .setFileName("test_avatar.png")
-                .setFilePath(filePath)
-                .setFileSize(data.length)
+                .setName("test_avatar.png")
+                .setPath(filePath)
+                .setSize(data.length)
                 .setMediaType(MediaType.IMAGE_PNG_VALUE)
                 .setData(data);
-        when(avatarService.getFromDB(ID)).thenReturn(testAvatarDTO);
+        when(avatarService.getAvatar(ID)).thenReturn(testAvatarDTO);
 
         ResultActions perform = mockMvc.perform(get(URL, ID));
 
@@ -76,7 +81,7 @@ class AvatarControllerTest {
                     assert response.getContentLength() == testAvatarDTO.getData().length;
                 })
                 .andExpect(content().bytes(testAvatarDTO.getData()))
-                .andExpect(header().string("Content-Length", String.valueOf(testAvatarDTO.getFileSize())));
+                .andExpect(header().string("Content-Length", String.valueOf(testAvatarDTO.getSize())));
 
     }
 
@@ -84,12 +89,12 @@ class AvatarControllerTest {
     void testDownloadAvatar() throws Exception {
         testAvatarDTO = new AvatarDTO()
                 .setId(ID)
-                .setFileName("test_avatar.png")
-                .setFilePath("/avatars/test_avatar.png")
-                .setFileSize("test image content".getBytes().length)
+                .setName("test_avatar.png")
+                .setPath("/avatars/test_avatar.png")
+                .setSize("test image content".getBytes().length)
                 .setMediaType(MediaType.IMAGE_PNG_VALUE)
                 .setData("test image content".getBytes());
-        when(avatarService.getFromDB(ID)).thenReturn(testAvatarDTO);
+        when(avatarService.getAvatar(ID)).thenReturn(testAvatarDTO);
 
         ResultActions perform = mockMvc.perform(get(URL + "/download", ID)
                 .content(testAvatarDTO.getData())
