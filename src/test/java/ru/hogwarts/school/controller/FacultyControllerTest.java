@@ -8,10 +8,10 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
 import ru.hogwarts.school.model.Faculty;
-import ru.hogwarts.school.repository.AvatarRepository;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
@@ -20,6 +20,8 @@ import java.util.Collection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 import static ru.hogwarts.school.mapper.StudentMapper.mapFromDTO;
+
+@ActiveProfiles("test")
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class FacultyControllerTest {
@@ -33,23 +35,20 @@ class FacultyControllerTest {
     private StudentRepository studentRepository;
 
     @Autowired
-    private AvatarRepository avatarRepository;
-
-    @Autowired
     private TestRestTemplate restTemplate;
 
     private FacultyDTO testFacultyDTO;
 
     @BeforeEach
     void init() {
-        avatarRepository.deleteAll();
         studentRepository.deleteAll();
         facultyRepository.deleteAll();
 
-        Faculty faculty = new Faculty()
-                .setName("test faculty")
-                .setColor("test color");
-        testFacultyDTO = mapToDTO(facultyRepository.save(faculty));
+        Faculty faculty =
+                facultyRepository.save(new Faculty()
+                        .setName("test faculty")
+                        .setColor("test color"));
+        testFacultyDTO = mapToDTO(faculty);
     }
 
     @Test
