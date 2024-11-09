@@ -8,11 +8,11 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
-import ru.hogwarts.school.repository.AvatarRepository;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
@@ -28,6 +28,7 @@ import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 import static ru.hogwarts.school.mapper.StudentMapper.mapFromDTO;
 import static ru.hogwarts.school.mapper.StudentMapper.mapToDTO;
 
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class StudentControllerTest {
     @LocalServerPort
@@ -40,9 +41,6 @@ class StudentControllerTest {
     private FacultyRepository facultyRepository;
 
     @Autowired
-    private AvatarRepository avatarRepository;
-
-    @Autowired
     private TestRestTemplate restTemplate;
 
     private final Random random = new Random();
@@ -51,34 +49,36 @@ class StudentControllerTest {
 
     private StudentDTO testStudentDTO;
 
+
     @BeforeEach
-    void setup() {
-        avatarRepository.deleteAll();
+    void init() {
         studentRepository.deleteAll();
         facultyRepository.deleteAll();
 
-        Faculty faculty = new Faculty()
-                .setName("test faculty")
-                .setColor("test color");
-        testFacultyDTO = mapToDTO(facultyRepository.save(faculty));
+        Faculty faculty = facultyRepository.save(
+                new Faculty()
+                        .setName("test faculty")
+                        .setColor("test color"));
+        testFacultyDTO = mapToDTO(faculty);
 
-        StudentDTO studentDTO = new StudentDTO()
-                .setName("test name")
-                .setAge(random.nextInt(12, 14))
-                .setFacultyId(testFacultyDTO.getId());
-        Student student = studentRepository.save(mapFromDTO(studentDTO));
+        Student student = studentRepository.save(
+                new Student()
+                        .setName("test student")
+                        .setAge(random.nextInt(12, 14))
+                        .setFaculty(faculty));
         testStudentDTO = mapToDTO(student);
     }
 
     @Test
     void testAddStudent() {
-        StudentDTO expectedStudentDTO = new StudentDTO()
-                .setName("any name")
-                .setAge(random.nextInt())
-                .setFacultyId(testFacultyDTO.getId());
+        StudentDTO expectedStudentDTO =
+                new StudentDTO()
+                        .setName("any student")
+                        .setAge(random.nextInt())
+                        .setFacultyId(testFacultyDTO.getId());
 
-        ResponseEntity<StudentDTO> response = restTemplate.postForEntity(
-                url(port), expectedStudentDTO, StudentDTO.class);
+        ResponseEntity<StudentDTO> response =
+                restTemplate.postForEntity(url(port), expectedStudentDTO, StudentDTO.class);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -104,7 +104,7 @@ class StudentControllerTest {
     @Test
     void testGetStudentsByAgeBetween() {
         studentRepository.save(new Student()
-                .setName("any name")
+                .setName("any student")
                 .setAge(13)
                 .setFaculty(mapFromDTO(testFacultyDTO)));
         ResponseEntity<Collection> response = restTemplate.getForEntity(
@@ -119,7 +119,7 @@ class StudentControllerTest {
     @Test
     void testGetStudentsByAge() {
         studentRepository.save(new Student()
-                .setName("any name")
+                .setName("any student")
                 .setAge(15)
                 .setFaculty(mapFromDTO(testFacultyDTO)));
 
@@ -201,7 +201,7 @@ class StudentControllerTest {
         long id = testStudentDTO.getId();
         StudentDTO expectedStudentDTO = new StudentDTO()
                 .setId(id)
-                .setName("new name")
+                .setName("new student")
                 .setAge(random.nextInt(50, 100));
 
         restTemplate.put(url(port), expectedStudentDTO);
