@@ -10,7 +10,6 @@ import ru.hogwarts.school.dto.StudentDTO;
 import ru.hogwarts.school.service.AvatarService;
 import ru.hogwarts.school.service.StudentService;
 
-import java.io.IOException;
 import java.util.Collection;
 
 @RestController
@@ -47,6 +46,13 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.OK).body(students);
     }
 
+    @GetMapping("list_of_names_starting_with_letter")
+    public ResponseEntity<Collection<String>> studentList(@RequestParam char letter) {
+        if (!Character.isAlphabetic(letter)) return ResponseEntity.badRequest().build();
+        Collection<String> studentsNames = studentService.getNamesStartingWith(letter);
+        return ResponseEntity.ok(studentsNames);
+    }
+
     @GetMapping("/{id}")
     public StudentDTO getStudentById(@PathVariable long id) {
         return studentService.getById(id);
@@ -58,7 +64,7 @@ public class StudentController {
     }
 
     @GetMapping("/average_age_of_students")
-    public float getAverageAgeOfStudents() {
+    public double getAverageAgeOfStudents() {
         return studentService.getAverageAgeOfStudents();
     }
 

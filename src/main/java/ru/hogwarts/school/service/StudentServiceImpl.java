@@ -13,8 +13,10 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
@@ -65,6 +67,20 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public Collection<String> getNamesStartingWith(char letter) {
+        LOGGER.info("Invoked method 'getStudentsNames'");
+        String prefix = String.valueOf(letter).toUpperCase();
+        Collection<String> studentsNames = getAll()
+                .stream()
+                .map(s -> s.getName().toUpperCase())
+                .filter(s -> s.startsWith(prefix))
+                .sorted()
+                .collect(Collectors.toCollection(ArrayList::new));
+        LOGGER.debug("The list of students names starting with letter '{}' size = {}", prefix, studentsNames.size());
+        return studentsNames;
+    }
+
+    @Override
     public FacultyDTO getFacultyOfStudent(long id) {
         LOGGER.info("Invoked method 'getFacultyOfStudent'");
         Optional<Student> foundStudent = repository.findById(id);
@@ -86,9 +102,13 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public float getAverageAgeOfStudents() {
+    public double getAverageAgeOfStudents() {
         LOGGER.info("Invoked method 'getAverageAgeOfStudents'");
-        return repository.getAverageAgeOfStudents();
+        return getAll()
+                .stream()
+                .mapToInt(StudentDTO::getAge)
+                .average()
+                .getAsDouble();
     }
 
     @Override

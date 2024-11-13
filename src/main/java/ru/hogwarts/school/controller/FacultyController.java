@@ -43,6 +43,11 @@ public class FacultyController {
         return studentService.findByFacultyId(id);
     }
 
+    @GetMapping("/longest_faculty_name")
+    public String longestFacultyName() {
+        return facultyService.longestFacultyName();
+    }
+
     @PutMapping
     public FacultyDTO changeFaculty(@RequestBody FacultyDTO facultyDTO) {
         return facultyService.change(facultyDTO);

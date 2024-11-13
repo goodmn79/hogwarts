@@ -13,6 +13,7 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repository.FacultyRepository;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +44,16 @@ public class FacultyServiceImpl implements FacultyService {
         }
         LOGGER.debug("The faculties list size: {}", filteredFaculty.size());
         return mapToDTO(filteredFaculty);
+    }
+
+    @Override
+    public String longestFacultyName() {
+        LOGGER.info("Invoked method 'longestFacultyName', for find faculty with longest name to DB 'Hogwarts'");
+        return getAll()
+                .stream()
+                .map(FacultyDTO::getName)
+                .max(Comparator.comparingInt(String::length))
+                .get();
     }
 
     @Override

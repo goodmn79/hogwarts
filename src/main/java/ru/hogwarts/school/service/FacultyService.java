@@ -6,4 +6,6 @@ import java.util.Collection;
 
 public interface FacultyService extends SchoolService<FacultyDTO> {
     Collection<FacultyDTO> getAllFacultiesByNameOrColor(String searchTerm);
+
+    String longestFacultyName();
 }
