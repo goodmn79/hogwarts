@@ -9,20 +9,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.exception.FacultyAlreadyAddedException;
 import ru.hogwarts.school.exception.FacultyNotFoundException;
+import ru.hogwarts.school.exception.InvalidDeletionRequestException;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,16 +39,17 @@ class FacultyServiceImplTest {
         String name = "test name";
         String color = "test color";
 
-        testFacultyDTO = new FacultyDTO()
+        testFaculty = new Faculty()
                 .setId(1L)
                 .setName(name)
-                .setColor(color);
+                .setColor(color)
+                .setStudents(Collections.EMPTY_LIST);
 
-        testFaculty = mapFromDTO(testFacultyDTO);
+        testFacultyDTO = mapToDTO(testFaculty);
     }
 
     @Test
-    void getAllFacultiesByNameOrColor() {
+    void getFaculties() {
         Collection<Faculty> filteredByName =
                 Stream.of(mock(Faculty.class), mock(Faculty.class)).toList();
         Collection<Faculty> filteredByColor =
@@ -62,13 +61,18 @@ class FacultyServiceImplTest {
         when(facultyRepository.findByNameContainsIgnoreCase(anyString())).thenReturn(filteredByName);
         when(facultyRepository.findByColorContainsIgnoreCase(anyString())).thenReturn(filteredByColor);
 
-        Collection<FacultyDTO> actual = facultyService.getAllFacultiesByNameOrColor(anyString());
+        Collection<FacultyDTO> actual = facultyService.getFaculties(anyString());
 
         assertEquals(actual.size(), expected.size());
     }
 
     @Test
-    void getAllFacultiesByNameOrColor_() {
+    void testGetFaculties_whenNoMatches_FacultyNotFoundException() {
+        String searchTerm = "NonExistent";
+        when(facultyRepository.findByNameContainsIgnoreCase(searchTerm)).thenReturn(Collections.emptyList());
+        when(facultyRepository.findByColorContainsIgnoreCase(searchTerm)).thenReturn(Collections.emptyList());
+
+        assertThrows(FacultyNotFoundException.class, () -> facultyService.getFaculties(searchTerm));
     }
 
     @Test
@@ -182,5 +186,15 @@ class FacultyServiceImplTest {
 
         assertThrows(FacultyNotFoundException.class, () -> facultyService.deleteById(testFacultyDTO.getId()));
         verify(facultyRepository, times(0)).delete(any(Faculty.class));
+    }
+
+    @Test
+    void testDeleteById_InvalidDeletionRequestException() {
+        testFaculty.setStudents(Collections.singletonList(new Student()));  // Добавляем студента
+
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(testFaculty));
+
+        assertThrows(InvalidDeletionRequestException.class, () -> facultyService.deleteById(1L));
+        verify(facultyRepository, never()).delete(any());
     }
 }

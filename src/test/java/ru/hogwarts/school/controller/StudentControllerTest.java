@@ -31,20 +31,15 @@ import static ru.hogwarts.school.mapper.StudentMapper.mapToDTO;
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class StudentControllerTest {
+    private final Random random = new Random();
     @LocalServerPort
     private int port;
-
     @Autowired
     private StudentRepository studentRepository;
-
     @Autowired
     private FacultyRepository facultyRepository;
-
     @Autowired
     private TestRestTemplate restTemplate;
-
-    private final Random random = new Random();
-
     private FacultyDTO testFacultyDTO;
 
     private StudentDTO testStudentDTO;

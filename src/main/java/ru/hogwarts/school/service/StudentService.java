@@ -12,11 +12,15 @@ public interface StudentService extends SchoolService<StudentDTO> {
 
     Collection<StudentDTO> findByAge(int age);
 
+    Collection<String> getNamesStartingWith(char letter);
+
     FacultyDTO getFacultyOfStudent(long id);
 
     int getCountOfStudents();
 
-    float getAverageAgeOfStudents();
+    double getAverageAgeOfStudents();
 
     Collection<StudentDTO> findLastStudents(int count);
+
+    Collection<StudentDTO> getStudents(Integer... args);
 }

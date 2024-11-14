@@ -22,7 +22,6 @@ import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 import static ru.hogwarts.school.mapper.StudentMapper.mapFromDTO;
 
 @ActiveProfiles("test")
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class FacultyControllerTest {
     @LocalServerPort
@@ -62,6 +61,7 @@ class FacultyControllerTest {
                                 .setName(name)
                                 .setColor(color),
                         FacultyDTO.class);
+
         FacultyDTO actualFacultyDTO = response.getBody();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

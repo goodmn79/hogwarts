@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import ru.hogwarts.school.dto.AvatarDTO;
@@ -24,14 +24,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ActiveProfiles("test")
 @WebMvcTest(AvatarController.class)
 class AvatarControllerTest {
     private static final long ID = 1L;
-    @LocalServerPort
-    private static int port;
-    private static final String URL = "http://localhost:" + port + "/avatars/{studentId}";
+
+    private static final String URL = "http://localhost:8080/avatars/{studentId}";
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @MockBean
     private AvatarService avatarService;
@@ -43,7 +43,7 @@ class AvatarControllerTest {
         long studentId = 1L;
         MockMultipartFile mockFile = new MockMultipartFile(
                 "avatar", "test_avatar.png", MediaType.MULTIPART_FORM_DATA_VALUE, "test image content".getBytes());
-
+        System.out.println(URL);
         ResultActions perform = mockMvc.perform(multipart(URL, studentId)
                 .file(mockFile)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE));

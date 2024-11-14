@@ -20,8 +20,7 @@ public class Student {
     @ToString.Exclude
     private Faculty faculty;
 
-    @OneToOne
-    @JoinColumn(name = "avatar_id")
+    @OneToOne(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private Avatar avatar;
 

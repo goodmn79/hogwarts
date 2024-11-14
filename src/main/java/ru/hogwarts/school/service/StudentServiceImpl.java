@@ -8,13 +8,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
+import ru.hogwarts.school.exception.InvalidParamsException;
 import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
@@ -65,6 +70,28 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public Collection<String> getNamesStartingWith(char latter) {
+        LOGGER.info("Invoked method 'getStudentsNames'");
+        if (!Character.isAlphabetic(latter)) {
+            LOGGER.error("InvalidParamsException. Character must be a latter");
+            throw new InvalidParamsException();
+        }
+        String prefix = String.valueOf(latter).toUpperCase();
+        Collection<String> studentsNames = getAll()
+                .stream()
+                .map(s -> s.getName().toUpperCase())
+                .filter(s -> s.startsWith(prefix))
+                .sorted()
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (studentsNames.isEmpty()) {
+            LOGGER.error("StudentNotFoundException. No students with a name starting with the letter '{}' were found in DB 'Hogwarts'", prefix);
+            throw new StudentNotFoundException();
+        }
+        LOGGER.debug("The list of students names starting with latter '{}' size = {}", prefix, studentsNames.size());
+        return studentsNames;
+    }
+
+    @Override
     public FacultyDTO getFacultyOfStudent(long id) {
         LOGGER.info("Invoked method 'getFacultyOfStudent'");
         Optional<Student> foundStudent = repository.findById(id);
@@ -86,9 +113,13 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public float getAverageAgeOfStudents() {
+    public double getAverageAgeOfStudents() {
         LOGGER.info("Invoked method 'getAverageAgeOfStudents'");
-        return repository.getAverageAgeOfStudents();
+        return getAll()
+                .stream()
+                .mapToInt(StudentDTO::getAge)
+                .average()
+                .getAsDouble();
     }
 
     @Override
@@ -97,6 +128,25 @@ public class StudentServiceImpl implements StudentService {
         Collection<Student> lastStudents = repository.findLastByIdDesc(count);
         LOGGER.debug("The list of students size = {}", lastStudents.size());
         return mapToDTO(lastStudents);
+    }
+
+    @Override
+    public Collection<StudentDTO> getStudents(Integer... args) {
+        Collection<StudentDTO> students;
+        if (nullable(args[0], args[1], args[2], args[3])) {
+            students = getAll();
+        } else if (nullable(args[2], args[3]) && !nullable(args[0], args[1])) {
+            students = findByAgeBetween(args[0], args[1]);
+        } else if (nullable(args[3], args[0], args[1])) {
+            students = findByAge(args[2]);
+        } else if (nullable(args[0], args[1], args[2])) {
+            int countOfStudents = getCountOfStudents();
+            if (args[3] > countOfStudents) args[3] = countOfStudents;
+            students = findLastStudents(args[3]);
+        } else {
+            throw new InvalidParamsException();
+        }
+        return students;
     }
 
     @Override
@@ -166,14 +216,24 @@ public class StudentServiceImpl implements StudentService {
     public StudentDTO deleteById(long id) {
         LOGGER.warn("Invoked method 'deleteById' delete data about the student with 'id = {}'", id);
         Optional<Student> student = repository.findById(id);
-        if (student.isPresent()) {
-            Student deletedStudent = student.get();
-            repository.delete(deletedStudent);
+        student.ifPresentOrElse(s -> {
+            repository.delete(s);
             LOGGER.debug("Student with 'id = {}' successfully deleted", id);
-            return mapToDTO(deletedStudent);
-        } else {
+        }, () -> {
             LOGGER.error("StudentNotFoundException. There is no such student with 'id = {}'", id);
             throw new StudentNotFoundException();
+        });
+        Student deletedStudent = student.get();
+        if (deletedStudent.getAvatar() != null) {
+            Files.deleteIfExists(Path.of(deletedStudent.getAvatar().getPath()));
         }
+        return mapToDTO(deletedStudent);
+    }
+
+    private boolean nullable(Integer... any) {
+        for (Integer i : any) {
+            if (i != null) return false;
+        }
+        return true;
     }
 }
