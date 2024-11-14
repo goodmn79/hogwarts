@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.exception.FacultyAlreadyAddedException;
 import ru.hogwarts.school.exception.FacultyNotFoundException;
+import ru.hogwarts.school.exception.InvalidDeletionRequestException;
 import ru.hogwarts.school.mapper.FacultyMapper;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repository.FacultyRepository;
@@ -30,8 +31,11 @@ public class FacultyServiceImpl implements FacultyService {
 
 
     @Override
-    public Collection<FacultyDTO> getAllFacultiesByNameOrColor(String searchTerm) {
-        LOGGER.info("Invoked method 'getAllFacultiesByNameOrColor' to get list of all faculties with name or color {}", searchTerm);
+    public Collection<FacultyDTO> getFaculties(String searchTerm) {
+        if (searchTerm == null) {
+            return getAll();
+        }
+        LOGGER.info("Invoked method 'getFaculties' to get list of all faculties with name or color {}", searchTerm);
         Collection<Faculty> filteredByNameFaculty = facultyRepository.findByNameContainsIgnoreCase(searchTerm);
         Collection<Faculty> filteredByColorFaculty = facultyRepository.findByColorContainsIgnoreCase(searchTerm);
         Collection<Faculty> filteredFaculty = Stream.concat(
@@ -118,14 +122,20 @@ public class FacultyServiceImpl implements FacultyService {
     public FacultyDTO deleteById(long id) {
         LOGGER.warn("Invoked method 'deleteById' delete data about the faculty with 'id = {}', data may be lost", id);
         Optional<Faculty> faculty = facultyRepository.findById(id);
+        Faculty deletedFaculty;
         if (faculty.isPresent()) {
-            Faculty deletedFaculty = faculty.get();
+            deletedFaculty = faculty.get();
+        } else {
+            LOGGER.error("FacultyNotFoundException. There is no faculty with 'id = {}'", id);
+            throw new FacultyNotFoundException();
+        }
+        if (deletedFaculty.getStudents().isEmpty()) {
             facultyRepository.delete(deletedFaculty);
             LOGGER.debug("Faculty with 'id = {}' successfully deleted", id);
             return mapToDTO(deletedFaculty);
         } else {
-            LOGGER.error("FacultyNotFoundException. There is no faculty with 'id = {}'", id);
-            throw new FacultyNotFoundException();
+            LOGGER.error("InvalidDeletionRequestException. It is not possible to delete a faculty while there are students on it");
+            throw new InvalidDeletionRequestException();
         }
     }
 }

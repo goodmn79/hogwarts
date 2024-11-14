@@ -21,4 +21,6 @@ public interface StudentService extends SchoolService<StudentDTO> {
     double getAverageAgeOfStudents();
 
     Collection<StudentDTO> findLastStudents(int count);
+
+    Collection<StudentDTO> getStudents(Integer... args);
 }

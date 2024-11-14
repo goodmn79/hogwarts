@@ -18,7 +18,7 @@ public class Avatar {
     @Transient
     private byte[] data;
     @OneToOne
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "student_id", nullable = false)
     @ToString.Exclude
     private Student student;
 

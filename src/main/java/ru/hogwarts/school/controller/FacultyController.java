@@ -1,7 +1,6 @@
 package ru.hogwarts.school.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.hogwarts.school.dto.FacultyDTO;
 import ru.hogwarts.school.dto.StudentDTO;
@@ -23,14 +22,8 @@ public class FacultyController {
     }
 
     @GetMapping
-    public Collection<FacultyDTO> getAllFaculties(@RequestParam(required = false) String search_term) {
-        Collection<FacultyDTO> faculties;
-        if (search_term == null) {
-            faculties = facultyService.getAll();
-        } else {
-            faculties = facultyService.getAllFacultiesByNameOrColor(search_term);
-        }
-        return faculties;
+    public Collection<FacultyDTO> getFaculties(@RequestParam(required = false) String search_term) {
+        return facultyService.getFaculties(search_term);
     }
 
     @GetMapping("/{id}")
@@ -54,13 +47,7 @@ public class FacultyController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<FacultyDTO> deleteFaculty(@PathVariable long id) {
-        try {
-            facultyService.deleteById(id);
-            return ResponseEntity.ok(facultyService.deleteById(id));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-
+    public FacultyDTO deleteFaculty(@PathVariable long id) {
+        return facultyService.deleteById(id);
     }
 }
