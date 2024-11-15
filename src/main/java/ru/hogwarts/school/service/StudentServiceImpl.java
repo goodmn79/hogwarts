@@ -18,7 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
@@ -29,6 +31,7 @@ import static ru.hogwarts.school.mapper.StudentMapper.mapToDTO;
 @Transactional
 @RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
+    private Integer count = 0;
     private static final Logger LOGGER = LoggerFactory.getLogger(StudentServiceImpl.class);
     private final StudentRepository repository;
     private final FacultyService facultyService;
@@ -150,6 +153,70 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public void printParallel() {
+        LOGGER.info("Invoke method 'printParallel'");
+        resetCounter();
+        List<String> students = listForPrint();
+        CountDownLatch latch = new CountDownLatch(2);
+
+        for (int i = 0; i < 2; i++) {
+            print(students.get(i));
+        }
+
+        new Thread(() -> {
+            for (int i = 2; i < 4; i++) {
+                print(students.get(i));
+            }
+            latch.countDown();
+        }).start();
+
+        new Thread(() -> {
+            for (int i = 4; i < students.size(); i++) {
+                print(students.get(i));
+            }
+            latch.countDown();
+        }).start();
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Override
+    public void printSynchronized() {
+        LOGGER.info("Invoke method 'printSynchronized'");
+        resetCounter();
+        List<String> students = listForPrint();
+        CountDownLatch latch = new CountDownLatch(2);
+
+        for (int i = 0; i < 2; i++) {
+            printSynchronized(students.get(i));
+        }
+
+        new Thread(() -> {
+            for (int i = 2; i < 4; i++) {
+                printSynchronized(students.get(i));
+            }
+            latch.countDown();
+        }).start();
+
+        new Thread(() -> {
+            for (int i = 4; i < students.size(); i++) {
+                printSynchronized(students.get(i));
+            }
+            latch.countDown();
+        }).start();
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Override
     public StudentDTO add(StudentDTO studentDTO) {
         LOGGER.info("Invoked method 'add'");
         Faculty faculty = mapFromDTO(facultyService.getById(studentDTO.getFacultyId()));
@@ -235,5 +302,27 @@ public class StudentServiceImpl implements StudentService {
             if (i != null) return false;
         }
         return true;
+    }
+
+    private List<String> listForPrint() {
+        return getAll()
+                .stream()
+                .limit(6)
+                .map(StudentDTO::getName)
+                .toList();
+    }
+
+    private void print(String s) {
+        System.out.println(++count + ". " + s);
+    }
+
+    private void printSynchronized(String s) {
+        synchronized (StudentServiceImpl.class) {
+            System.out.println(++count + ". " + s);
+        }
+    }
+
+    private void resetCounter() {
+        this.count = 0;
     }
 }

@@ -23,4 +23,8 @@ public interface StudentService extends SchoolService<StudentDTO> {
     Collection<StudentDTO> findLastStudents(int count);
 
     Collection<StudentDTO> getStudents(Integer... args);
+
+    void printParallel();
+
+    void printSynchronized();
 }

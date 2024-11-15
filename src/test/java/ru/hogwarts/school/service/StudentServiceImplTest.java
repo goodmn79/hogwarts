@@ -62,7 +62,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByFacultyId_shouldReturnAllStudentsOfFaculty() {
+    void findByFacultyId_shouldReturnAllListForPrintOfFaculty() {
         Collection<Student> students =
                 Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findAllByFacultyId(anyLong())).thenReturn(students);
@@ -74,14 +74,14 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByFacultyId_whenStudentsNotFound_shouldThrowException() {
+    void findByFacultyId_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findAllByFacultyId(anyLong())).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.findByFacultyId(anyLong()));
     }
 
     @Test
-    void findByAgeBetween_shouldReturnAllStudentsWithThisAge() {
+    void findByAgeBetween_shouldReturnAllListForPrintWithThisAge() {
         Collection<Student> students =
                 Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findByAgeBetween(anyInt(), anyInt())).thenReturn(students);
@@ -93,14 +93,14 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByAgeBetween_whenStudentsNotFound_shouldThrowException() {
+    void findByAgeBetween_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findByAgeBetween(anyInt(), anyInt())).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.findByAgeBetween(anyInt(), anyInt()));
     }
 
     @Test
-    void findByAge_shouldReturnAllStudentsWithThisAge() {
+    void findByAge_shouldReturnAllListForPrintWithThisAge() {
         Collection<Student> students =
                 Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findByAge(anyInt())).thenReturn(students);
@@ -112,7 +112,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByAge_whenStudentsNotFound_shouldThrowException() {
+    void findByAge_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findByAge(anyInt())).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.findByAge(anyInt()));
@@ -150,7 +150,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void getAll_shouldReturnAllStudents() {
+    void getAll_shouldReturnAllListForPrint() {
         List<Student> students = Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findAll()).thenReturn(students);
 
@@ -161,7 +161,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void getAll_whenStudentsNotFound_shouldThrowException() {
+    void getAll_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findAll()).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.getAll());
