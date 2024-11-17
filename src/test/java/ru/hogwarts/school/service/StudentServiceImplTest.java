@@ -1,5 +1,6 @@
 package ru.hogwarts.school.service;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,10 +14,10 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +41,7 @@ class StudentServiceImplTest {
     private FacultyDTO testFacultyDTO;
     private StudentDTO testStudentDTO;
     private Student testStudent;
+    private List<Student> testStudents;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +61,14 @@ class StudentServiceImplTest {
         Faculty testFaculty = mapFromDTO(testFacultyDTO);
         testStudent = mapFromDTO(testStudentDTO)
                 .setFaculty(testFaculty);
+
+        testStudents = Arrays.asList(
+                new Student().setName("Student1"),
+                new Student().setName("Student2"),
+                new Student().setName("Student3"),
+                new Student().setName("Student4"),
+                new Student().setName("Student5"),
+                new Student().setName("Student6"));
     }
 
     @Test
@@ -133,6 +143,36 @@ class StudentServiceImplTest {
         when(studentRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.getFacultyOfStudent(anyLong()));
+    }
+
+    @Test
+    void testPrintParallel() {
+        when(studentRepository.findAll()).thenReturn(testStudents);
+
+        String output = captureSystemOutput(() -> studentService.printParallel());
+        System.out.println("Ожидаемый результат:\n" + output + " конец!");
+
+        assertTrue(output.contains("Student1"));
+        assertTrue(output.contains("Student2"));
+        assertTrue(output.contains("Student3"));
+        assertTrue(output.contains("Student4"));
+        assertTrue(output.contains("Student5"));
+        assertTrue(output.contains("Student6"));
+    }
+
+    @Test
+    public void testPrintSynchronized() {
+        when(studentRepository.findAll()).thenReturn(testStudents);
+
+        String output = captureSystemOutput(() -> studentService.printSynchronized());
+        System.out.println("Ожидаемый результат:\n" + output + " конец!");
+
+        assertTrue(output.contains("Student1"));
+        assertTrue(output.contains("Student2"));
+        assertTrue(output.contains("Student3"));
+        assertTrue(output.contains("Student4"));
+        assertTrue(output.contains("Student5"));
+        assertTrue(output.contains("Student6"));
     }
 
     @Test
@@ -225,5 +265,25 @@ class StudentServiceImplTest {
         when(studentRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.deleteById(anyLong()));
+    }
+
+    @SneakyThrows
+    private String captureSystemOutput(Runnable task) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(out));
+        CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            new Thread(() -> {
+                task.run();
+                latch.countDown();
+            }).start();
+
+            latch.await();
+        } finally {
+            System.setOut(originalOut);
+        }
+        return out.toString();
     }
 }

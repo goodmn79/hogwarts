@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
+import static java.lang.Thread.currentThread;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapFromDTO;
 import static ru.hogwarts.school.mapper.FacultyMapper.mapToDTO;
 import static ru.hogwarts.school.mapper.StudentMapper.mapToDTO;
@@ -157,11 +158,14 @@ public class StudentServiceImpl implements StudentService {
         LOGGER.info("Invoke method 'printParallel'");
         resetCounter();
         List<String> students = listForPrint();
-        CountDownLatch latch = new CountDownLatch(2);
+        CountDownLatch latch = new CountDownLatch(3);
 
-        for (int i = 0; i < 2; i++) {
-            print(students.get(i));
-        }
+        new Thread(() -> {
+            for (int i = 0; i < 2; i++) {
+                print(students.get(i));
+            }
+            latch.countDown();
+        }).start();
 
         new Thread(() -> {
             for (int i = 2; i < 4; i++) {
@@ -180,7 +184,7 @@ public class StudentServiceImpl implements StudentService {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            currentThread().interrupt();
         }
     }
 
@@ -189,22 +193,31 @@ public class StudentServiceImpl implements StudentService {
         LOGGER.info("Invoke method 'printSynchronized'");
         resetCounter();
         List<String> students = listForPrint();
-        CountDownLatch latch = new CountDownLatch(2);
+        CountDownLatch latch = new CountDownLatch(3);
 
-        for (int i = 0; i < 2; i++) {
-            printSynchronized(students.get(i));
-        }
+        new Thread(() -> {
+            for (int i = 0; i < 2; i++) {
+                synchronized (latch) {
+                    print(students.get(i));
+                }
+            }
+            latch.countDown();
+        }).start();
 
         new Thread(() -> {
             for (int i = 2; i < 4; i++) {
-                printSynchronized(students.get(i));
+                synchronized (latch) {
+                    print(students.get(i));
+                }
             }
             latch.countDown();
         }).start();
 
         new Thread(() -> {
             for (int i = 4; i < students.size(); i++) {
-                printSynchronized(students.get(i));
+                synchronized (latch) {
+                    print(students.get(i));
+                }
             }
             latch.countDown();
         }).start();
@@ -212,7 +225,7 @@ public class StudentServiceImpl implements StudentService {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            currentThread().interrupt();
         }
     }
 
@@ -314,12 +327,6 @@ public class StudentServiceImpl implements StudentService {
 
     private void print(String s) {
         System.out.println(++count + ". " + s);
-    }
-
-    private void printSynchronized(String s) {
-        synchronized (StudentServiceImpl.class) {
-            System.out.println(++count + ". " + s);
-        }
     }
 
     private void resetCounter() {
