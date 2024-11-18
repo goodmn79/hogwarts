@@ -1,5 +1,6 @@
 package ru.hogwarts.school.service;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,10 +14,10 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +41,7 @@ class StudentServiceImplTest {
     private FacultyDTO testFacultyDTO;
     private StudentDTO testStudentDTO;
     private Student testStudent;
+    private List<Student> testStudents;
 
     @BeforeEach
     void setUp() {
@@ -59,10 +61,18 @@ class StudentServiceImplTest {
         Faculty testFaculty = mapFromDTO(testFacultyDTO);
         testStudent = mapFromDTO(testStudentDTO)
                 .setFaculty(testFaculty);
+
+        testStudents = Arrays.asList(
+                new Student().setName("Student1"),
+                new Student().setName("Student2"),
+                new Student().setName("Student3"),
+                new Student().setName("Student4"),
+                new Student().setName("Student5"),
+                new Student().setName("Student6"));
     }
 
     @Test
-    void findByFacultyId_shouldReturnAllStudentsOfFaculty() {
+    void findByFacultyId_shouldReturnAllListForPrintOfFaculty() {
         Collection<Student> students =
                 Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findAllByFacultyId(anyLong())).thenReturn(students);
@@ -74,14 +84,14 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByFacultyId_whenStudentsNotFound_shouldThrowException() {
+    void findByFacultyId_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findAllByFacultyId(anyLong())).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.findByFacultyId(anyLong()));
     }
 
     @Test
-    void findByAgeBetween_shouldReturnAllStudentsWithThisAge() {
+    void findByAgeBetween_shouldReturnAllListForPrintWithThisAge() {
         Collection<Student> students =
                 Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findByAgeBetween(anyInt(), anyInt())).thenReturn(students);
@@ -93,14 +103,14 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByAgeBetween_whenStudentsNotFound_shouldThrowException() {
+    void findByAgeBetween_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findByAgeBetween(anyInt(), anyInt())).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.findByAgeBetween(anyInt(), anyInt()));
     }
 
     @Test
-    void findByAge_shouldReturnAllStudentsWithThisAge() {
+    void findByAge_shouldReturnAllListForPrintWithThisAge() {
         Collection<Student> students =
                 Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findByAge(anyInt())).thenReturn(students);
@@ -112,7 +122,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void findByAge_whenStudentsNotFound_shouldThrowException() {
+    void findByAge_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findByAge(anyInt())).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.findByAge(anyInt()));
@@ -136,6 +146,36 @@ class StudentServiceImplTest {
     }
 
     @Test
+    void testPrintParallel() {
+        when(studentRepository.findAll()).thenReturn(testStudents);
+
+        String output = captureSystemOutput(() -> studentService.printParallel());
+        System.out.println("Ожидаемый результат:\n" + output + " конец!");
+
+        assertTrue(output.contains("Student1"));
+        assertTrue(output.contains("Student2"));
+        assertTrue(output.contains("Student3"));
+        assertTrue(output.contains("Student4"));
+        assertTrue(output.contains("Student5"));
+        assertTrue(output.contains("Student6"));
+    }
+
+    @Test
+    public void testPrintSynchronized() {
+        when(studentRepository.findAll()).thenReturn(testStudents);
+
+        String output = captureSystemOutput(() -> studentService.printSynchronized());
+        System.out.println("Ожидаемый результат:\n" + output + " конец!");
+
+        assertTrue(output.contains("Student1"));
+        assertTrue(output.contains("Student2"));
+        assertTrue(output.contains("Student3"));
+        assertTrue(output.contains("Student4"));
+        assertTrue(output.contains("Student5"));
+        assertTrue(output.contains("Student6"));
+    }
+
+    @Test
     void add_shouldReturnNewStudent() {
         when(facultyService.getById(1L)).thenReturn(testFacultyDTO);
         when(studentRepository.save(any(Student.class))).thenReturn(testStudent);
@@ -150,7 +190,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void getAll_shouldReturnAllStudents() {
+    void getAll_shouldReturnAllListForPrint() {
         List<Student> students = Stream.of(mock(Student.class), mock(Student.class), mock(Student.class)).toList();
         when(studentRepository.findAll()).thenReturn(students);
 
@@ -161,7 +201,7 @@ class StudentServiceImplTest {
     }
 
     @Test
-    void getAll_whenStudentsNotFound_shouldThrowException() {
+    void getAll_whenListForPrintNotFound_shouldThrowException() {
         when(studentRepository.findAll()).thenReturn(new ArrayList<>());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.getAll());
@@ -225,5 +265,25 @@ class StudentServiceImplTest {
         when(studentRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         assertThrows(StudentNotFoundException.class, () -> studentService.deleteById(anyLong()));
+    }
+
+    @SneakyThrows
+    private String captureSystemOutput(Runnable task) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(out));
+        CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            new Thread(() -> {
+                task.run();
+                latch.countDown();
+            }).start();
+
+            latch.await();
+        } finally {
+            System.setOut(originalOut);
+        }
+        return out.toString();
     }
 }
